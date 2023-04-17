@@ -9389,11 +9389,7 @@ function run() {
 
                 // Add more messages to inputs.body
                 inputs.body += '\n\nCherry-pick failed due to a conflict.';
-            }   catch (err) {
-                if (err instanceof Error) {
-                  core.setFailed(err);
-                }
-              }
+            }
             core.endGroup();
             // Push new branch
             core.startGroup('Push change(s) to remote');
