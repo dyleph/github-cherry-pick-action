@@ -9381,14 +9381,6 @@ function run() {
                 ]);
                 if (result.exitCode !== 0 && !result.stderr.includes(CHERRYPICK_EMPTY)) {
                     //throw new Error(`Unexpected error: ${result.stderr}`);
-                    // Cherry-pick failed due to a conflict
-                    core.info('Cherry-pick failed due to a conflict.');
-
-                    // Push prepare branch to remote
-                    yield gitExecution(['push', '-u', 'origin', `${prBranch}`, '--force']);
-
-                    // Add more messages to inputs.body
-                    inputs.body += '\n\nCherry-pick failed due to a conflict.';
                 }
                 core.endGroup();
 
@@ -9396,8 +9388,16 @@ function run() {
                 if (err instanceof Error) {
                    core.setFailed(err);
                 }
+                // Cherry-pick failed due to a conflict
+                core.info('[debugging] Cherry-pick failed due to a conflict.');
+
+                // Push prepare branch to remote
+                yield gitExecution(['push', '-u', 'origin', `${prBranch}`, '--force']);
+
+                // Add more messages to inputs.body
+                inputs.body += '\n\nCherry-pick failed due to a conflict.';
                 // Create pull request
-                core.startGroup('Opening pull request');
+                core.startGroup('[debugging]  Opening pull request');
                 const pull = yield (0, github_helper_1.createPullRequest)(inputs, prBranch);
                 core.setOutput('data', JSON.stringify(pull.data));
                 core.setOutput('number', pull.data.number);
