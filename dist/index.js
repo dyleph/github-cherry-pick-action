@@ -9383,7 +9383,6 @@ function run() {
                     //throw new Error(`Unexpected error: ${result.stderr}`);
                 }
                 core.endGroup();
-
             } catch (err) {
                 if (err instanceof Error) {
                    core.setFailed(err);
@@ -9391,11 +9390,18 @@ function run() {
                 // Cherry-pick failed due to a conflict
                 core.info('[debugging] Cherry-pick failed due to a conflict.');
 
-                // Push prepare branch to remote
-                yield gitExecution(['push', '-u', 'origin', `${prBranch}`, '--force']);
-
                 // Add more messages to inputs.body
                 inputs.body += '\n\nCherry-pick failed due to a conflict.';
+            } finally {
+                // Push new branch
+                core.startGroup('Push change(s) to remote');
+                if (inputs.force) {
+                    yield gitExecution(['push', '-u', 'origin', `${prBranch}`, '--force']);
+                }
+                else {
+                    yield gitExecution(['push', '-u', 'origin', `${prBranch}`]);
+                }
+                core.endGroup();
                 // Create pull request
                 core.startGroup('[debugging]  Opening pull request');
                 const pull = yield (0, github_helper_1.createPullRequest)(inputs, prBranch);
@@ -9404,22 +9410,6 @@ function run() {
                 core.setOutput('html_url', pull.data.html_url);
                 core.endGroup();
             }
-            // Push new branch
-            core.startGroup('Push change(s) to remote');
-            if (inputs.force) {
-                yield gitExecution(['push', '-u', 'origin', `${prBranch}`, '--force']);
-            }
-            else {
-                yield gitExecution(['push', '-u', 'origin', `${prBranch}`]);
-            }
-            core.endGroup();
-            // Create pull request
-            core.startGroup('Opening pull request');
-            const pull = yield (0, github_helper_1.createPullRequest)(inputs, prBranch);
-            core.setOutput('data', JSON.stringify(pull.data));
-            core.setOutput('number', pull.data.number);
-            core.setOutput('html_url', pull.data.html_url);
-            core.endGroup();
         }
         catch (err) {
             if (err instanceof Error) {
