@@ -9368,7 +9368,6 @@ function run() {
             yield gitExecution(['checkout', '-b', prBranch, `origin/${inputs.branch}`]);
             yield gitExecution(['commit', '--allow-empty', '-m', 'Prepare a new branch for cherry picking into ${inputs.branch}']);
             core.endGroup();
-            core.endGroup();
             // Cherry pick
             core.startGroup('Cherry picking');
             const result = yield gitExecution([
@@ -9389,6 +9388,14 @@ function run() {
 
                 // Add more messages to inputs.body
                 inputs.body += '\n\nCherry-pick failed due to a conflict.';
+
+                // Create pull request
+                core.startGroup('Opening pull request');
+                const pull = yield (0, github_helper_1.createPullRequest)(inputs, prBranch);
+                core.setOutput('data', JSON.stringify(pull.data));
+                core.setOutput('number', pull.data.number);
+                core.setOutput('html_url', pull.data.html_url);
+                core.endGroup();
             }
             core.endGroup();
             // Push new branch
