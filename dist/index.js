@@ -9366,7 +9366,7 @@ function run() {
             // Create new branch
             core.startGroup(`Create new branch ${prBranch} from ${inputs.branch}`);
             yield gitExecution(['checkout', '-b', prBranch, `origin/${inputs.branch}`]);
-            yield gitExecution(['commit', '--allow-empty', '-m', 'Prepare a new branch for cherry picking into ${inputs.branch}']);
+            yield gitExecution(['commit', '--allow-empty', '-m', 'Empty commit']);
             core.endGroup();
             try {
                 // Cherry pick
@@ -9388,10 +9388,10 @@ function run() {
                    core.setFailed(err);
                 }
                 // Cherry-pick failed due to a conflict
-                core.info('[debugging] Cherry-pick failed due to a conflict.');
+                core.info('[DEBUG] Cherry-pick failed due to a conflict.');
 
                 // Add more messages to inputs.body
-                inputs.body += '\n\nCherry-pick failed due to a conflict.';
+                inputs.body += '\nOups, cherry-pick failed due to a conflict. Please checkout this branch and try to resolve it by manually.';
             } finally {
                 // Push new branch
                 core.startGroup('Push change(s) to remote');
@@ -9403,7 +9403,7 @@ function run() {
                 }
                 core.endGroup();
                 // Create pull request
-                core.startGroup('[debugging]  Opening pull request');
+                core.startGroup('Opening pull request');
                 const pull = yield (0, github_helper_1.createPullRequest)(inputs, prBranch);
                 core.setOutput('data', JSON.stringify(pull.data));
                 core.setOutput('number', pull.data.number);
