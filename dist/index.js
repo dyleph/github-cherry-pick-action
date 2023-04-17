@@ -9366,15 +9366,8 @@ function run() {
             // Create branch new branch
             core.startGroup(`Create new branch ${prBranch} from ${inputs.branch}`);
             yield gitExecution(['checkout', '-b', prBranch, `origin/${inputs.branch}`]);
+            yield gitExecution(['commit', '--allow-empty', '-m', 'Prepare a new branch for cherry picking into ${inputs.branch}']);
             core.endGroup();
-            // Push new branch
-            core.startGroup('Prepare new branch on remote');
-            if (inputs.force) {
-                yield gitExecution(['push', '-u', 'origin', `${prBranch}`, '--force']);
-            }
-            else {
-                yield gitExecution(['push', '-u', 'origin', `${prBranch}`]);
-            }
             core.endGroup();
             // Cherry pick
             core.startGroup('Cherry picking');
@@ -9387,8 +9380,20 @@ function run() {
                 `${githubSha}`
             ]);
             if (result.exitCode !== 0 && !result.stderr.includes(CHERRYPICK_EMPTY)) {
-                throw new Error(`Unexpected error: ${result.stderr}`);
-            }
+                //throw new Error(`Unexpected error: ${result.stderr}`);
+                // Cherry-pick failed due to a conflict
+                core.info('Cherry-pick failed due to a conflict.');
+
+                // Push prepare branch to remote
+                yield gitExecution(['push', '-u', 'origin', `${prBranch}`, '--force']);
+
+                // Add more messages to inputs.body
+                inputs.body += '\n\nCherry-pick failed due to a conflict.';
+            }   catch (err) {
+                if (err instanceof Error) {
+                  core.setFailed(err);
+                }
+              }
             core.endGroup();
             // Push new branch
             core.startGroup('Push change(s) to remote');
