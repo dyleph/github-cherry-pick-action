@@ -9343,7 +9343,7 @@ function run() {
             core.info(`Cherry pick into branch ${inputs.branch}!`);
             const githubSha = process.env.GITHUB_SHA;
             const prBranch = inputs.cherryPickBranch
-                ? inputs.cherryPickBranch
+                ? `${inputs.cherryPickBranch}-${githubSha}`
                 : `cherry-pick-${inputs.branch}-${githubSha}`;
             // Configure the committer and author
             core.startGroup('Configuring the committer and author');
@@ -9367,6 +9367,15 @@ function run() {
             core.startGroup(`Create new branch ${prBranch} from ${inputs.branch}`);
             yield gitExecution(['checkout', '-b', prBranch, `origin/${inputs.branch}`]);
             core.endGroup();
+            // Push new branch
+            core.startGroup('Prepare new branch on remote');
+            if (inputs.force) {
+                yield gitExecution(['push', '-u', 'origin', `${prBranch}`, '--force']);
+            }
+            else {
+                yield gitExecution(['push', '-u', 'origin', `${prBranch}`]);
+            }
+            core.endGroup();
             // Cherry pick
             core.startGroup('Cherry picking');
             const result = yield gitExecution([
@@ -9374,7 +9383,7 @@ function run() {
                 '-m',
                 '1',
                 '--strategy=recursive',
-                '--strategy-option=theirs',
+                '--strategy-option=ours',
                 `${githubSha}`
             ]);
             if (result.exitCode !== 0 && !result.stderr.includes(CHERRYPICK_EMPTY)) {
@@ -9382,7 +9391,7 @@ function run() {
             }
             core.endGroup();
             // Push new branch
-            core.startGroup('Push new branch to remote');
+            core.startGroup('Push change(s) to remote');
             if (inputs.force) {
                 yield gitExecution(['push', '-u', 'origin', `${prBranch}`, '--force']);
             }
@@ -9670,7 +9679,7 @@ module.exports = require("zlib");
 /************************************************************************/
 /******/ 	// The module cache
 /******/ 	var __webpack_module_cache__ = {};
-/******/ 	
+/******/
 /******/ 	// The require function
 /******/ 	function __nccwpck_require__(moduleId) {
 /******/ 		// Check if module is in cache
@@ -9684,7 +9693,7 @@ module.exports = require("zlib");
 /******/ 			// no module.loaded needed
 /******/ 			exports: {}
 /******/ 		};
-/******/ 	
+/******/
 /******/ 		// Execute the module function
 /******/ 		var threw = true;
 /******/ 		try {
@@ -9693,23 +9702,23 @@ module.exports = require("zlib");
 /******/ 		} finally {
 /******/ 			if(threw) delete __webpack_module_cache__[moduleId];
 /******/ 		}
-/******/ 	
+/******/
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
-/******/ 	
+/******/
 /************************************************************************/
 /******/ 	/* webpack/runtime/compat */
-/******/ 	
+/******/
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
-/******/ 	
+/******/
 /************************************************************************/
-/******/ 	
+/******/
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
 /******/ 	var __webpack_exports__ = __nccwpck_require__(6144);
 /******/ 	module.exports = __webpack_exports__;
-/******/ 	
+/******/
 /******/ })()
 ;
